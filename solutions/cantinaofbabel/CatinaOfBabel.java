@@ -3,13 +3,13 @@ import java.util.*;
 public class CatinaOfBabel {
     static class Node {
         String name;
-        HashSet<Node> inwards;
-        HashSet<Node> outwards;
+        ArrayList<Node> inwards;
+        ArrayList<Node> outwards;
 
         Node(String name) {
             this.name = name;
-            inwards = new HashSet<>();
-            outwards = new HashSet<>();
+            inwards = new ArrayList<>();
+            outwards = new ArrayList<>();
         }
     }
 
@@ -26,14 +26,17 @@ public class CatinaOfBabel {
             String[] line = scanner.nextLine().split(" ");
             String name = line[0];
             names.add(name);
-            peopleToLanguageSpeak.put(name, line[1]);
-            languageSpeakToPeople.putIfAbsent(line[1], new HashSet<>());
-            languageSpeakToPeople.get(line[1]).add(name);
+            String languageSpeak = line[1];
+            peopleToLanguageSpeak.put(name, languageSpeak);
+            languageSpeakToPeople.putIfAbsent(languageSpeak, new HashSet<>());
+            languageSpeakToPeople.get(languageSpeak).add(name);
             for (int j = 1; j < line.length; j++) {
+                String languageUnderstand = line[j];
                 peopleToLanguageUnderstand.putIfAbsent(name, new HashSet<>());
-                peopleToLanguageUnderstand.get(name).add(line[j]);
-                languageUnderstandToPeople.putIfAbsent(line[j], new HashSet<>());
-                languageUnderstandToPeople.get(line[j]).add(name);
+                peopleToLanguageUnderstand.get(name).add(languageUnderstand);
+
+                languageUnderstandToPeople.putIfAbsent(languageUnderstand, new HashSet<>());
+                languageUnderstandToPeople.get(languageUnderstand).add(name);
             }
         }
         HashMap<String, Node> nodesMap = new HashMap<>();
@@ -56,34 +59,34 @@ public class CatinaOfBabel {
         Stack<Node> stack = new Stack<>();
         for (Node node : nodes) {
             if (!visited.contains(node))
-                recurse(visited, node, stack);
+                topOrder(visited, node, stack);
         }
         visited.clear();
         int max = 0;
         while (!stack.isEmpty()) {
             Node pop = stack.pop();
             if (!visited.contains(pop))
-                max = Math.max(max, recurse2(visited, pop));
+                max = Math.max(max, getSCCSize(visited, pop));
         }
         System.out.println(n - max);
 
     }
 
-    public static int recurse2(HashSet<Node> visited, Node curr) {
+    public static int getSCCSize(HashSet<Node> visited, Node curr) {
         visited.add(curr);
         int sum = 1;
         for (Node child : curr.inwards) {
             if (!visited.contains(child))
-                sum += recurse2(visited, child);
+                sum += getSCCSize(visited, child);
         }
         return sum;
     }
 
-    public static void recurse(HashSet<Node> visited, Node curr, Stack<Node> stack) {
+    public static void topOrder(HashSet<Node> visited, Node curr, Stack<Node> stack) {
+        if (visited.contains(curr)) return;
         visited.add(curr);
         for (Node child : curr.outwards) {
-            if (!visited.contains(child))
-                recurse(visited, child, stack);
+            topOrder(visited, child, stack);
         }
         stack.add(curr);
     }
